@@ -3,16 +3,14 @@
 # Add steps that run tests, create a NuGet package, deploy, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
 
-name: [prefix]_quiz4_ci_dotnet
+
 
 trigger:
 - main
 
 pool:
-  name: 'SelfHosted'  # Use self-hosted agent pool
-  demands:
-  - agent.name -equals [SelfHosted]  # Replace with your agent name
-
+  name: SelfHosted  # Use self-hosted agent pool
+ 
 variables:
   buildConfiguration: 'Release'
 
