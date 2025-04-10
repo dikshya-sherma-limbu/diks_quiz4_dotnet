@@ -1,63 +1,35 @@
 trigger:
 - main
-
 pool:
-  vmImage: 'Default'  # Switching to Microsoft-hosted agent
-
+  name: 'Default'  # Use self-hosted agent pool
 variables:
   buildConfiguration: 'Release'
-
 steps:
-# First diagnostic step - check what's in the repo
-- script: |
-    dir /s *.csproj
-    echo "---Current directory content---"
-    dir
-  displayName: 'Directory listing'
-
-# Install specific .NET SDK version
 - task: UseDotNet@2
-  displayName: 'Install .NET 6.0.x SDK'
+  displayName: 'Use .NET Core SDK'
   inputs:
-    packageType: 'sdk'
-    version: '6.0.x'  # Try .NET 6 instead of 8
+    version: '9.0.x'
     installationPath: $(Agent.ToolsDirectory)/dotnet
-
-# Clear any cached NuGet state
-- script: |
-    dotnet --info
-    dotnet nuget locals all --clear
-  displayName: 'Show .NET Info and Clear NuGet cache'
-
-# Restore with very verbose logging
 - task: DotNetCoreCLI@2
-  displayName: 'Restore packages'
+  displayName: 'Restore NuGet packages'
   inputs:
     command: 'restore'
-    projects: '**/*.csproj'
-    verbosityRestore: 'Detailed'
-    feedsToUse: 'select'
-
-# Build with minimal settings
+    projects: '/*.csproj'
 - task: DotNetCoreCLI@2
-  displayName: 'Build'
+  displayName: 'Build application'
   inputs:
     command: 'build'
-    projects: '**/*.csproj'
-    arguments: '--configuration $(buildConfiguration) --no-restore'
-
-# Publish the app
+    projects: '/*.csproj'
+    arguments: '--configuration $(buildConfiguration)'
 - task: DotNetCoreCLI@2
-  displayName: 'Publish'
+  displayName: 'Publish application'
   inputs:
     command: 'publish'
     publishWebProjects: true
-    arguments: '--configuration $(buildConfiguration) --no-build --output $(Build.ArtifactStagingDirectory)'
+    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
     zipAfterPublish: true
-
-# Publish the artifacts
 - task: PublishBuildArtifacts@1
-  displayName: 'Publish Artifacts'
+  displayName: 'Publish artifacts'
   inputs:
-    pathToPublish: '$(Build.ArtifactStagingDirectory)'
+    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
     artifactName: 'WebApp'
