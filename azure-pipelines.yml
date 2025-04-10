@@ -4,34 +4,35 @@ trigger:
 - main
 
 pool:
-  name: 'Default'  # Use self-hosted agent pool
-
+  vmImage: 'Default'  # Using Microsoft-hosted agent for simplicity
 
 variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
 steps:
 - task: UseDotNet@2
-  displayName: 'Use .NET Core SDK'
+  displayName: 'Install .NET SDK'
   inputs:
+    packageType: 'sdk'
     version: '8.0.x'
-    installationPath: $(Agent.ToolsDirectory)/dotnet
 
 - task: DotNetCoreCLI@2
-  displayName: 'Restore NuGet packages'
+  displayName: 'Restore packages'
   inputs:
     command: 'restore'
     projects: '**/*.csproj'
 
 - task: DotNetCoreCLI@2
-  displayName: 'Build application'
+  displayName: 'Build'
   inputs:
     command: 'build'
     projects: '**/*.csproj'
     arguments: '--configuration $(buildConfiguration)'
 
 - task: DotNetCoreCLI@2
-  displayName: 'Publish application'
+  displayName: 'Publish'
   inputs:
     command: 'publish'
     publishWebProjects: true
@@ -41,5 +42,5 @@ steps:
 - task: PublishBuildArtifacts@1
   displayName: 'Publish artifacts'
   inputs:
-    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    pathToPublish: '$(Build.ArtifactStagingDirectory)'
     artifactName: 'WebApp'
