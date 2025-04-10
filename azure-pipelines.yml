@@ -1,46 +1,63 @@
-
-
 trigger:
 - main
 
 pool:
-  vmImage: 'Default'  # Using Microsoft-hosted agent for simplicity
+  vmImage: 'Default'  # Switching to Microsoft-hosted agent
 
 variables:
-  solution: '**/*.sln'
-  buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
 steps:
+# First diagnostic step - check what's in the repo
+- script: |
+    dir /s *.csproj
+    echo "---Current directory content---"
+    dir
+  displayName: 'Directory listing'
+
+# Install specific .NET SDK version
 - task: UseDotNet@2
-  displayName: 'Install .NET SDK'
+  displayName: 'Install .NET 6.0.x SDK'
   inputs:
     packageType: 'sdk'
-    version: '8.0.x'
+    version: '6.0.x'  # Try .NET 6 instead of 8
+    installationPath: $(Agent.ToolsDirectory)/dotnet
 
+# Clear any cached NuGet state
+- script: |
+    dotnet --info
+    dotnet nuget locals all --clear
+  displayName: 'Show .NET Info and Clear NuGet cache'
+
+# Restore with very verbose logging
 - task: DotNetCoreCLI@2
   displayName: 'Restore packages'
   inputs:
     command: 'restore'
     projects: '**/*.csproj'
+    verbosityRestore: 'Detailed'
+    feedsToUse: 'select'
 
+# Build with minimal settings
 - task: DotNetCoreCLI@2
   displayName: 'Build'
   inputs:
     command: 'build'
     projects: '**/*.csproj'
-    arguments: '--configuration $(buildConfiguration)'
+    arguments: '--configuration $(buildConfiguration) --no-restore'
 
+# Publish the app
 - task: DotNetCoreCLI@2
   displayName: 'Publish'
   inputs:
     command: 'publish'
     publishWebProjects: true
-    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+    arguments: '--configuration $(buildConfiguration) --no-build --output $(Build.ArtifactStagingDirectory)'
     zipAfterPublish: true
 
+# Publish the artifacts
 - task: PublishBuildArtifacts@1
-  displayName: 'Publish artifacts'
+  displayName: 'Publish Artifacts'
   inputs:
     pathToPublish: '$(Build.ArtifactStagingDirectory)'
     artifactName: 'WebApp'
