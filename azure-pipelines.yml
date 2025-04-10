@@ -7,7 +7,7 @@ trigger:
 - main
 
 pool:
-  vmImage: selfhosted
+  vmImage: SelfHosted
 
 variables:
   buildConfiguration: 'Release'
